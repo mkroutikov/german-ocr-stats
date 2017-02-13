@@ -67,30 +67,6 @@ def merge(d1, *av):
         d1.update(d)
     return d1
 
-def file_stats_txt(glob_pattern, dictionary, output_fname):
-
-    totals = collections.defaultdict(int)
-    with io.open(output_fname, 'w', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=['name', 'numeric', 'short', 'dictionary', 'non-dictionary', 'total'])
-        writer.writeheader()
-
-        for fname in sorted(glob.glob(glob_pattern)):
-            name = os.path.basename(fname)
-            print('Processing:', name)
-
-            per_file = stats(dictionary, words_from_txt(fname))
-
-            for key, val in per_file.items():
-                totals[key] += val
-
-            writer.writerow(merge({
-                'name': name
-            }, per_file))
-
-        writer.writerow(merge({
-            'name': 'Totals'
-        }, totals))
-
 def file_stats(files, dictionary, output_fname):
 
     totals = collections.defaultdict(int)
