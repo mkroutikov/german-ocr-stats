@@ -16,17 +16,13 @@ import collections
 import csv
 import lxml.etree as et
 
-def parse_corpus(fname):
+def parse_dictionary(fname):
 
-    corpus = []
     with io.open('dictionary/german.dic', 'r', encoding='cp1252') as f:
         for word in f:
             word = word.strip()
-            if not word:
-                continue
-            corpus.append(word)
-
-    return corpus
+            if word:
+                yield word
 
 def words_from_txt(fname):
     with io.open(fname, 'r', encoding='utf-8') as f:
@@ -93,9 +89,9 @@ def file_stats(files, dictionary, output_fname):
 if __name__ == '__main__':
 
     print('Loading German dictionary...')
-    corpus = parse_corpus('dictionary/german.dic')
-
-    dictionary = set(x.lower() for x in corpus)
+    dictionary = set(
+        x.lower() for x in parse_dictionary('dictionary/german.dic')
+    )
     print('Loaded', len(dictionary), 'unique lowercase words')
 
     def txt_files():
