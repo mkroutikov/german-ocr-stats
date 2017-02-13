@@ -28,13 +28,25 @@ def parse_corpus(fname):
 
     return corpus
 
-def stats_txt(fname, dictionary):
-
+def words_from_txt(fname):
     with io.open(fname, 'r', encoding='utf-8') as f:
         text = f.read()
 
+    yield from re.findall(r'\w+', text)
+
+def words_from_xml(fname):
+    with io.open(fname, 'rb') as f:
+        xml = et.fromstring(f.read())
+
+    for elt in xml.findall('.//word'):
+        text = elt.attrib['text']
+
+        yield from re.findall(r'\w+', text)
+
+def stats(dictionary, words):
+
     per_file = collections.defaultdict(int)
-    for word in re.findall(r'\w+', text):
+    for word in words:
         word = word.lower()
 
         if re.match(r'\d+$', word):
@@ -46,30 +58,6 @@ def stats_txt(fname, dictionary):
         else:
             per_file['non-dictionary'] += 1
         per_file['total'] += 1
-
-    return per_file
-
-def stats_xml(fname, dictionary):
-
-    with io.open(fname, 'rb') as f:
-        xml = et.fromstring(f.read())
-
-    per_file = collections.defaultdict(int)
-    for elt in xml.findall('.//word'):
-        text = elt.attrib['text']
-
-        for word in re.findall(r'\w+', text):
-            word = word.lower()
-
-            if re.match(r'\d+$', word):
-                per_file['numeric'] += 1
-            elif len(word) < 3:
-                per_file['short'] += 1
-            elif word in dictionary:
-                per_file['dictionary'] += 1
-            else:
-                per_file['non-dictionary'] += 1
-            per_file['total'] += 1
 
     return per_file
 
@@ -90,7 +78,7 @@ def file_stats_txt(glob_pattern, dictionary, output_fname):
             name = os.path.basename(fname)
             print('Processing:', name)
 
-            per_file = stats_txt(fname, dictionary)
+            per_file = stats(dictionary, words_from_txt(fname))
 
             for key, val in per_file.items():
                 totals[key] += val
@@ -103,18 +91,17 @@ def file_stats_txt(glob_pattern, dictionary, output_fname):
             'name': 'Totals'
         }, totals))
 
-def file_stats_xml(glob_pattern, dictionary, output_fname):
+def file_stats(files, dictionary, output_fname):
 
     totals = collections.defaultdict(int)
     with io.open(output_fname, 'w', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=['name', 'numeric', 'short', 'dictionary', 'non-dictionary', 'total'])
         writer.writeheader()
 
-        for fname in sorted(glob.glob(glob_pattern)):
-            name = os.path.basename(fname)
+        for name, words in files:
             print('Processing:', name)
 
-            per_file = stats_xml(fname, dictionary)
+            per_file = stats(dictionary, words)
 
             for key, val in per_file.items():
                 totals[key] += val
@@ -135,5 +122,13 @@ if __name__ == '__main__':
     dictionary = set(x.lower() for x in corpus)
     print('Loaded', len(dictionary), 'unique lowercase words')
 
-    file_stats_txt('ocr-hlsl/*.txt', dictionary, output_fname='ocr-hlsl.csv')
-    file_stats_xml('ocr-inno/*.xml', dictionary, output_fname='ocr-inno.csv')
+    def txt_files():
+        for fname in glob.glob('ocr-hlsl/*.txt'):
+            yield os.path.basename(fname), words_from_txt(fname)
+
+    def xml_files():
+        for fname in glob.glob('ocr-inno/*.xml'):
+            yield os.path.basename(fname), words_from_xml(fname)
+
+    file_stats(txt_files(), dictionary, output_fname='ocr-hlsl.csv')
+    file_stats(xml_files(), dictionary, output_fname='ocr-inno.csv')
