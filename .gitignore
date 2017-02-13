@@ -1,0 +1,12 @@
+__pycache__
+*.pyc
+*.pyo
+.venv
+dictionary
+ocr-hlsl
+ocr-inno
+*.csv
+*.xlsx
+*.log
+err
+*.pickle
