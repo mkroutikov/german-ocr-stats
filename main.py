@@ -35,9 +35,7 @@ def words_from_xml(fname):
         xml = et.fromstring(f.read())
 
     for elt in xml.findall('.//word'):
-        text = elt.attrib['text']
-
-        yield from re.findall(r'\w+', text)
+        yield from re.findall(r'\w+', elt.text)
 
 def stats(dictionary, words):
 
@@ -95,11 +93,11 @@ if __name__ == '__main__':
     print('Loaded', len(dictionary), 'unique lowercase words')
 
     def txt_files():
-        for fname in glob.glob('ocr-hlsl/*.txt'):
+        for fname in sorted(glob.glob('ocr-hlsl/*.txt')):
             yield os.path.basename(fname), words_from_txt(fname)
 
     def xml_files():
-        for fname in glob.glob('ocr-inno/*.xml'):
+        for fname in sorted(glob.glob('ocr-inno/*.xml')):
             yield os.path.basename(fname), words_from_xml(fname)
 
     file_stats(txt_files(), dictionary, output_fname='ocr-hlsl.csv')

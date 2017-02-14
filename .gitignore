@@ -4,9 +4,10 @@ __pycache__
 .venv
 dictionary
 ocr-hlsl
-ocr-inno
+ocr-inno*
 *.csv
 *.xlsx
 *.log
 err
 *.pickle
+.~*
